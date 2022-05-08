@@ -1,0 +1,7 @@
+dependencies: 'smartcontractkit/chainlink-brownie-contracts@0.3.0'
+compiler:
+  solc:
+    remappings: '@chainlink=smartcontractkit/chainlink-brownie-contracts@0.3.0'
+networks:
+  mainnet-fork:
+    eth_usd: "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"
