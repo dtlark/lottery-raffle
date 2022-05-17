@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-//import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 
 contract Ownable {
@@ -30,9 +30,10 @@ contract Ownable {
 
 contract Lottery is VRFConsumerBase, Ownable {
     
-    address payable[] public entries;
+    mapping(uint => address) public entries;
     address payable public winner;
     uint256 usdEntryFee;
+    uint ticketNum;
     AggregatorV3Interface internal EthUsdPrice;
     enum LOTTO_STATE {
         OPEN,
@@ -53,13 +54,15 @@ contract Lottery is VRFConsumerBase, Ownable {
         EthUsdPrice = AggregatorV3Interface(_ethusdpriceAddress);
         lottery_state = LOTTO_STATE.CLOSED;
         fee = _fee;
+        ticketNum = 0;
         keyHash = _keyHash;
     }
 
     function enter() public payable {
         require(lottery_state == LOTTO_STATE.OPEN);
         require(msg.value >= getFee(), "Not enough eth!");
-        entries.push(payable(msg.sender));
+        ticketNum += 1;
+        entries[ticketNum] = payable(msg.sender);
     }
 
     function getFee() public view returns(uint256) {
@@ -81,9 +84,9 @@ contract Lottery is VRFConsumerBase, Ownable {
 
     function fulfillRandomness(bytes32 requestId, uint256 _randomness) internal override {
         require(lottery_state == LOTTO_STATE.CALCULATING, "Not yet.");
-        require(_randomness > 0, "Random not got");
-        uint256 indexofWinner = _randomness % entries;
-        winner = entriesp[indexofWinner];
+        require(_randomness > 0, "Not able to get random number!!");
+        uint256 indexofWinner = _randomness % ticketNum;
+        winner = entries[indexofWinner];
         winner.transfer(address(this).balance);
         entries = new address payable[](0);
         lottery_state = LOTTO_STATE.CLOSED;
